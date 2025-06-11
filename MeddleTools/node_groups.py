@@ -1552,45 +1552,75 @@ def handleShader(mat: bpy.types.Material, mesh, object, deduplicate: bool, direc
     if mat is None:
         return {'CANCELLED'}
     
-    shader_package = mat["ShaderPackage"]
+    shader_package = mat.get("ShaderPackage", None)
     if shader_package is None:
         return {'CANCELLED'}
     
     print(f"Handling shader package {shader_package} on material {mat.name}")
     
+    handled = False
+
     if shader_package == 'skin.shpk':
         handleSkin(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package == 'hair.shpk':
         handleHair(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package == 'iris.shpk':
         handleIris(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package == 'charactertattoo.shpk':
         handleCharacterTattoo(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package == 'characterocclusion.shpk':
         handleCharacterOcclusion(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package in ('character.shpk', 'characterlegacy.shpk', 'characterscroll.shpk', 
                           'characterglass.shpk', 'characterinc.shpk', 'characterstockings.shpk'):
         handleCharacterSimple(mat, mesh, directory, shader_package)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package == 'bgcolorchange.shpk':
         handleBgColorChange(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
     if shader_package in ('water.shpk', 'river.shpk'):
         handleWater(mat, mesh, directory)
-        return {'FINISHED'}
+        mat['MeddleApplied'] = True
+        handled = True
     
+    if shader_package in ('bg.shpk', 'bguvscroll.shpk', 'bgcrestchange.shpk'):
+        handleBg(mat, mesh, directory)
+        mat['MeddleApplied'] = True
+        handled = True
+    
+    if shader_package == 'lightshaft.shpk':
+        handleLightShaft(mat, mesh, directory)
+        mat['MeddleApplied'] = True
+        handled = True
+    
+    if shader_package == 'bgprop.shpk':
+        handleBgProp(mat, mesh, directory)
+        mat['MeddleApplied'] = True
+        handled = True
+    
+    if shader_package == 'crystal.shpk':
+        handleCrystal(mat, mesh, directory)
+        mat['MeddleApplied'] = True
+        handled = True
+
     # check if material exists already in scene by same name
     # note: any materials with additional inputs outside the .mtrl values, should not be deduplicated as they should be unique to the object
     if 'Material' in mat and deduplicate:
@@ -1604,29 +1634,10 @@ def handleShader(mat: bpy.types.Material, mesh, object, deduplicate: bool, direc
                         if objSlot.material.name == mat.name:
                             objSlot.material = slot.material
                             print(f"Material {mat.name} already exists in scene, using existing material")
-                            return {'FINISHED'}
-                
     
-    if shader_package == 'bg.shpk' or shader_package == 'bguvscroll.shpk' or shader_package == 'bgcrestchange.shpk':
-        handleBg(mat, mesh, directory)
-        mat['MeddleApplied'] = True
+    if handled:
         return {'FINISHED'}
-    
-    if shader_package == 'lightshaft.shpk':
-        handleLightShaft(mat, mesh, directory)
-        mat['MeddleApplied'] = True
-        return {'FINISHED'}
-    
-    if shader_package == 'bgprop.shpk':
-        handleBgProp(mat, mesh, directory)
-        mat['MeddleApplied'] = True
-        return {'FINISHED'}
-    
-    if shader_package == 'crystal.shpk':
-        handleCrystal(mat, mesh, directory)
-        mat['MeddleApplied'] = True
-        return {'FINISHED'}
-    
+
     spawnFallbackTextures(mat, directory)
     print(f"No suitable shader found for {shader_package} on material {mat.name}")
     return {'CANCELLED'}
